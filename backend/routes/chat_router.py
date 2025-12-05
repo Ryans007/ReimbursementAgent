@@ -10,7 +10,7 @@ import uuid
 router = APIRouter()
 
 class ChatRequest(BaseModel):
-    thread_id: str = None
+    thread_id : str | None  = None
     user_message: str
 
 @router.post("/chat/", response_model=MessageScheme)

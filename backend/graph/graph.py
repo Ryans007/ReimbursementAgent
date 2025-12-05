@@ -5,7 +5,7 @@ import sqlite3
 from langgraph.checkpoint.sqlite import SqliteSaver
 from .utils import save_graph_to_file
 
-conn = sqlite3.connect("checkpoints.db", check_same_thread=False)
+conn = sqlite3.connect("database/checkpoints.db", check_same_thread=False)
 memory = SqliteSaver(conn)
 
 builder = StateGraph(AgentState)
