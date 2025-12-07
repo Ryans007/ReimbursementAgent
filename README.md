@@ -4,6 +4,10 @@
 
 POC de agente interno para decisões de reembolso/cancelamento utilizando RAG (Retrieval-Augmented Generation) com base de conhecimento simulada. O sistema foi desenvolvido com foco em consistência operacional e redução de respostas incorretas.
 
+Este projeto inclui:
+- **Backend**: API REST construída com FastAPI que orquestra agentes inteligentes
+- **Frontend**: Interface web interativa com widget de chat para simular interações de usuários
+
 ### Características Principais
 
 - **RAG (Retrieval-Augmented Generation)**: Utiliza uma base de conhecimento para fundamentar as decisões
@@ -14,18 +18,27 @@ POC de agente interno para decisões de reembolso/cancelamento utilizando RAG (R
   - Cobrança após cancelamento
 - **Arquitetura Multi-Agente**: Sistema baseado em LangGraph com agentes especializados
 - **Vector Store**: Busca semântica usando FAISS
+- **Interface Interativa**: Frontend com catálogo de produtos e widget de chat integrado
 
 ## Tecnologias Utilizadas
 
+### Backend
 - **Python 3.11**
 - **FastAPI**: API REST para comunicação com o sistema
 - **PostgreSQL**: Banco de dados para armazenamento de histórico
-- **Docker & Docker Compose**: Containerização e orquestração
 - **LangChain** & **LangGraph**: Framework para agentes e orquestração
 - **Google Gemini**: Modelos de linguagem (2.5-pro e 2.5-flash)
 - **FAISS**: Vector store para busca semântica
 - **SQLAlchemy**: ORM para interação com banco de dados
 - **Pydantic**: Validação de dados estruturados
+
+### Frontend
+- **HTML5 / CSS3 / JavaScript**: Interface web responsiva
+- **Nginx**: Servidor web para servir os arquivos estáticos
+- **Widget de Chat**: Interface integrada para comunicação com o agente
+
+### Infraestrutura
+- **Docker & Docker Compose**: Containerização e orquestração de serviços
 
 ## Como Instalar
 
@@ -45,22 +58,38 @@ cd "Agente de Rembolso"
 
 2. **Configure as variáveis de ambiente**
 
-Crie um arquivo `.env` na raiz do projeto:
+Copie o arquivo `.env.example` para `.env` e preencha com suas credenciais:
+```bash
+# Windows (PowerShell)
+Copy-Item .env.example .env
+
+# Linux/Mac
+cp .env.example .env
+```
+
+Edite o arquivo `.env` e configure:
 ```env
 # API do Google Gemini
 GEMINI_API_KEY=sua_chave_api_aqui
 
 # Configurações do PostgreSQL
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=password
-POSTGRES_DB=reembolso_db
-POSTGRES_PORT=5432
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=admin
+POSTGRES_DB=gemini_db
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5436
 
-# Porta do backend
-BACKEND_PORT=8000
+# Porta do Backend
+# IMPORTANTE: Recomendado usar 8002 pois o frontend está configurado para esta porta
+BACKEND_PORT=8002
+
+# Porta do Frontend
+FRONTEND_PORT=3002
 ```
 
 > **Nota**: Obtenha sua API Key em [Google AI Studio](https://aistudio.google.com/apikey)
+
+> **⚠️ Importante**: É recomendável manter o `BACKEND_PORT=8002` pois o frontend está configurado para se comunicar com o backend nesta porta. Se alterar, será necessário atualizar o arquivo `frontend/scripts/api.js`.
 
 3. **Execute com Docker Compose**
 ```bash
@@ -68,66 +97,45 @@ docker-compose up -d --build
 ```
 
 4. **Acesse a aplicação**
-- API: http://localhost:8000
-- Documentação da API: http://localhost:8000/docs
-
-### Instalação para Desenvolvimento Local
-
-1. **Clone o repositório**
-```bash
-git clone <url-do-repositorio>
-cd "Agente de Rembolso"
-```
-
-2. **Crie e ative um ambiente virtual**
-```bash
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# Linux/Mac
-source venv/bin/activate
-```
-
-3. **Instale as dependências**
-```bash
-cd backend
-pip install -r requirements.txt
-```
-
-4. **Configure as variáveis de ambiente**
-
-Crie um arquivo `.env` na raiz do projeto:
-```env
-GEMINI_API_KEY=sua_chave_api_aqui
-```
-
-
-5. **Prepare a base de conhecimento**
-
-O sistema já inclui uma base de conhecimento de exemplo em `backend/data/base_conhecimento_ifood_genai-exemplo.csv`. O índice FAISS será criado automaticamente na primeira execução.
+- **Frontend**: http://localhost:3002
+- **API Backend**: http://localhost:8002
+- **Documentação da API**: http://localhost:8002/docs
 
 ## Como Usar
+
+### Interface Web (Frontend)
 
 1. **Inicie os serviços**
 ```bash
 docker-compose up -d --build
 ```
 
-2. **Acesse a documentação interativa**
-Visite http://localhost:8000/docs para explorar a API
+2. **Acesse o frontend**
+Abra seu navegador em http://localhost:3002
 
-3. **Faça uma requisição de exemplo**
+![Interface do Frontend](./assets/frontend-screenshot.png)
+*Interface do catálogo de produtos com widget de chat integrado*
+
+3. **Interaja com o agente**
+- Clique no botão de chat no canto inferior direito da tela
+- Digite sua dúvida sobre reembolsos
+- O agente responderá com base na base de conhecimento
+
+### API REST (Backend)
+
+1. **Acesse a documentação interativa**
+Visite http://localhost:8002/docs para explorar a API
+
+2. **Faça uma requisição de exemplo**
 ```bash
-curl -X POST "http://localhost:8000/chat/" \
+curl -X POST "http://localhost:8002/chat/" \
      -H "Content-Type: application/json" \
      -d '{"user_message": "O cliente quer reembolso, mas o pedido já saiu para entrega. Ainda é permitido?"}'
 ```
 
-4. **Consulte o histórico de mensagens**
+3. **Consulte o histórico de mensagens**
 ```bash
-curl "http://localhost:8000/history/"
+curl "http://localhost:8002/history/"
 ```
 
 
@@ -157,40 +165,107 @@ Resposta Final
 ### Estrutura de Diretórios
 
 ```
-backend/
-├── index.py                     # API FastAPI (ponto de entrada)
-├── test.py                      # Chatbot local
-├── requirements.txt             # Dependências Python
-├── Dockerfile                   # Imagem Docker
-├── assets/                      # Contém a imagem do grafo
-├── data/                        # Base de conhecimento (CSV)
-├── faiss_index/                 # Índices de busca vetorial
-├── database/                    # Configuração do banco de dados
-│   ├── database.py              # SQLAlchemy setup
-│   └── checkpoints.db           # Base SQLite para checkpoints
-├── models/                      # Modelos SQLAlchemy
-│   └── message_model.py         # Modelo de mensagens
-├── routes/                      # Rotas da API FastAPI
-│   ├── chat_router.py           # Endpoint de chat
-│   └── history_router.py        # Endpoint de histórico
-├── schemes/                     # Schemas Pydantic
-│   └── message_scheme.py        # Validação de dados
-└── graph/
-    ├── agents/                  # Definição dos agentes
-    │   ├── classification_agent.py
-    │   ├── reimbursement_agent.py
-    │   └── revisor_agent.py
-    ├── nodes/                   # Nós do grafo LangGraph
-    │   ├── classification_node.py
-    │   ├── reimbursement_node.py
-    │   └── revisor_node.py
-    ├── tools/                   # Ferramentas (vector store)
-    │   └── vector_store_tool.py
-    ├── graph.py                 # Orquestração do fluxo
-    ├── state.py                 # Estado compartilhado
-    ├── insertion.py             # Criação do vector store
-    └── utils.py                 # Utilitários
+Agente de Rembolso/
+├── .env                         # Variáveis de ambiente (não versionado)
+├── .env.example                 # Exemplo de configuração
+├── docker-compose.yaml          # Orquestração dos containers
+├── README.md                    # Documentação do projeto
+│
+├── backend/                     # API e lógica de negócio
+│   ├── index.py                 # API FastAPI (ponto de entrada)
+│   ├── requirements.txt         # Dependências Python
+│   ├── Dockerfile               # Imagem Docker do backend
+│   │
+│   ├── assets/                  # Recursos estáticos
+│   │   └── graph.png            # Diagrama do fluxo do grafo
+│   │
+│   ├── data/                    # Base de conhecimento
+│   │   └── base_conhecimento_ifood_genai-exemplo.csv
+│   │
+│   ├── faiss_index/             # Índices de busca vetorial
+│   │   ├── index.faiss          # Índice FAISS
+│   │   └── index.pkl            # Metadados do índice
+│   │
+│   ├── database/                # Configuração do banco de dados
+│   │   ├── database.py          # SQLAlchemy setup e sessões
+│   │   └── checkpoints.db       # Base SQLite para checkpoints
+│   │
+│   ├── models/                  # Modelos SQLAlchemy (ORM)
+│   │   └── message_model.py     # Modelo de mensagens do chat
+│   │
+│   ├── routes/                  # Rotas da API FastAPI
+│   │   ├── chat_router.py       # Endpoint de chat
+│   │   └── history_router.py    # Endpoint de histórico
+│   │
+│   ├── schemes/                 # Schemas Pydantic
+│   │   └── message_scheme.py    # Validação de requests/responses
+│   │
+│   └── graph/                   # Sistema de agentes LangGraph
+│       ├── graph.py             # Orquestração do fluxo principal
+│       ├── state.py             # Estado compartilhado entre nós
+│       ├── insertion.py         # Criação e inserção no vector store
+│       ├── utils.py             # Funções auxiliares
+│       │
+│       ├── agents/              # Definição dos agentes especializados
+│       │   ├── classification_agent.py    # Classifica tipo de consulta
+│       │   ├── reimbursement_agent.py     # Gera resposta com RAG
+│       │   └── revisor_agent.py           # Valida e refina respostas
+│       │
+│       ├── nodes/               # Nós executáveis do grafo
+│       │   ├── classification_node.py
+│       │   ├── reimbursement_node.py
+│       │   └── revisor_node.py
+│       │
+│       └── tools/               # Ferramentas disponíveis aos agentes
+│           └── vector_store_tool.py       # Busca semântica no FAISS
+│
+└── frontend/                    # Interface web do usuário
+    ├── index.html               # Página principal com catálogo
+    ├── Dockerfile               # Imagem Docker do frontend (Nginx)
+    │
+    ├── assets/                  # Recursos estáticos
+    │   └── products/            # Imagens dos produtos
+    │       ├── burger.jpg
+    │       ├── pizza.jpg
+    │       ├── sushi.jpg
+    │       ├── tacos.jpg
+    │       ├── salad.jpg
+    │       └── dessert.jpg
+    │
+    ├── scripts/                 # JavaScript
+    │   ├── api.js               # Cliente HTTP para comunicação com backend
+    │   └── widget.js            # Lógica do widget de chat
+    │
+    └── styles/                  # Folhas de estilo
+        ├── main.css             # Estilos da página principal
+        └── widget.css           # Estilos do widget de chat
 ```
+
+## Frontend
+
+### Descrição
+
+O frontend é uma aplicação web estática que simula uma plataforma de e-commerce com um widget de chat integrado para atendimento ao cliente. Foi desenvolvido para demonstrar como o agente de reembolso pode ser integrado em uma interface real.
+
+### Funcionalidades
+
+- **Catálogo de Produtos**: Exibe produtos simulados (burgers, pizzas, sushi, etc.)
+- **Widget de Chat**: Interface flutuante no canto inferior direito
+- **Comunicação em Tempo Real**: Integração com a API do backend via JavaScript
+- **Histórico de Conversas**: Mantém o contexto da conversa com thread_id
+- **Design Responsivo**: Adaptável a diferentes tamanhos de tela
+
+### Arquitetura do Frontend
+
+```
+Usuário → index.html → widget.js → api.js → Backend (localhost:8002)
+                         ↓
+                    widget.css
+```
+
+O frontend se comunica com o backend através de requisições HTTP para os endpoints:
+- `POST /chat/`: Enviar mensagens ao agente
+- `GET /chat_history/`: Recuperar histórico de conversas
 
 ## Sistema de Confiança
 

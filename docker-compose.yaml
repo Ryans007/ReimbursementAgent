@@ -30,6 +30,19 @@ services:
     networks:
       - backend_network
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "${FRONTEND_PORT}:3000"
+    environment:
+      BACKEND_URL: http://localhost:8002
+    depends_on:
+      - backend
+    networks:
+      - backend_network
+
 volumes:
   db_data:
 
